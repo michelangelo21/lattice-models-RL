@@ -6,6 +6,6 @@ register(
     entry_point="gym_xymodel.envs:XYmodelEnv",
 )
 register(
-    id='isingmodel-v0',
-    entry_point='gym_xymodel.envs:IsingModelEnv',
+    id="isingmodel-v0",
+    entry_point="gym_xymodel.envs:IsingModelEnv",
 )
