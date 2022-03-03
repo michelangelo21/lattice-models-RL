@@ -11,14 +11,16 @@ class IsingModelEnv(gym.Env):
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self):
+    def __init__(self, side_len=4):
+        """Initialization of the gym environment"""
         # lattice SIDE_LENGTH x SIDE_LENGTH
-        self.side_len = 4
-        self.observation_space = spaces.MultiBinary(self.side_len ** 2)
+        self.side_len = side_len
+
+        self.observation_space = spaces.MultiBinary(self.side_len**2)
         # states are -1 or 1
         self.state = self.observation_space.sample()
         self.energy = self.compute_energy()
-        self.action_space = spaces.Discrete(self.side_len ** 2)
+        self.action_space = spaces.Discrete(self.side_len**2)
 
     def state_to_lattice(self):
         """
