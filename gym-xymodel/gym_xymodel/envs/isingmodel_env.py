@@ -11,9 +11,9 @@ class IsingModelEnv(gym.Env):
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, side_len=4):
+    def __init__(self, side_len: int = 4):
         """Initialization of the gym environment"""
-        # lattice SIDE_LENGTH x SIDE_LENGTH
+        # lattice side_len x side_len
         self.side_len = side_len
 
         self.observation_space = spaces.MultiBinary(self.side_len**2)
@@ -26,7 +26,7 @@ class IsingModelEnv(gym.Env):
         """
         Convert state to lattice [0,1] -> [-1,1]
         """
-        lattice = np.reshape(self.state * 2 - 1, (self.side_len, self.side_len))
+        lattice = np.reshape(2 * self.state - 1, (self.side_len, self.side_len))
         return lattice
 
     def compute_energy(self):
@@ -55,7 +55,8 @@ class IsingModelEnv(gym.Env):
         reward = -(new_energy - self.energy)
         self.energy = new_energy
 
-        done = self.finish_condition()
+        # Done when energy is minimal, and all spins are the same
+        done = np.all(self.state == self.state[0])
         info = {"energy": self.energy}
         return self.state, reward, done, info
 
