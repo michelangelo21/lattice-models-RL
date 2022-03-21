@@ -27,7 +27,6 @@ function lattice(side_length::Integer, A; T=Float64)
     #     ))
     #     for i in CartesianIndices(θ)
     # ]
-    @info typeof(θ)
     return lattice(
         θ,
         A,
@@ -40,8 +39,8 @@ function energy(lattice)
     side_length = size(lattice.θ, 1)
     # previdx = mod1.((1:side_length) .- 1, side_length)
     E = -sum(
-        cos(θpi[i, j] - θpi[lattice.previdx[i], j]) +
-        cos(θpi[i, j] - θpi[i, lattice.previdx[i]])
+        cos(θpi[i, j] - θpi[lattice.previdx[i], j] + lattice.A[i, j][1]) +
+        cos(θpi[i, j] - θpi[i, lattice.previdx[i]] + lattice.A[i, j][2])
         for i in 1:side_length
         for j in 1:side_length
     )
@@ -58,7 +57,7 @@ function find_ground_state(side_length, steps=100)
     @progress for i in 1:steps
         # ∇ = gradient(energy, state)[1]
         E, grads = withgradient(energy, lat)
-        δθ = grads[1].θ * 0.01
+        δθ = -grads[1].θ * 0.01
 
         # lat.θ = (lat.θ .- ∇θ .* 0.01) .% 1.0
         lat.θ .+= δθ
