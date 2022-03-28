@@ -35,7 +35,7 @@ function lattice(side_length::Integer, A; T=Float64)
 end
 
 function energy(lattice)
-    θpi = π .* lattice.θ
+    θpi = 2π .* lattice.θ #! 2π
     side_length = size(lattice.θ, 1)
     # previdx = mod1.((1:side_length) .- 1, side_length)
     E = -sum(
@@ -48,20 +48,19 @@ function energy(lattice)
 end
 
 
-function find_ground_state(side_length, steps=100)
-    A = [Tuple(rand(2)) for i in 1:side_length, j in 1:side_length]
-
+function find_ground_state(side_length, A; steps=100)
     lat = lattice(side_length, A)
     energies = [energy(lat)]
 
     @progress for i in 1:steps
         # ∇ = gradient(energy, state)[1]
         E, grads = withgradient(energy, lat)
-        δθ = -grads[1].θ * 0.01
-
+        δθ = -grads[1].θ * 1e-4
+        maximum(abs.(δθ)) > 1 && @warn δθ
         # lat.θ = (lat.θ .- ∇θ .* 0.01) .% 1.0
         lat.θ .+= δθ
-        lat.θ .%= 1.0
+        # ? rem2pi
+        lat.θ = mod.(lat.θ, 1.0) #! negative angles are not allowed
 
 
         push!(energies, E)
@@ -72,7 +71,17 @@ function find_ground_state(side_length, steps=100)
     return lat, energies
 end
 
-ground_state, energies = find_ground_state(20, 2000)
+side_length = 20
+A = [Tuple(4π * rand(2) .- 2π) for i in 1:side_length, j in 1:side_length]
+
+ground_state, energies = find_ground_state(side_length, A; steps=10000)
+plot(energies)
+plot(diff(energies))
+heatmap(ground_state.θ)
+
+minimum(energies)
+
+
 
 @time find_ground_state(20, 2000)
 @profview find_ground_state(20, 2000)
@@ -86,8 +95,9 @@ lat = lattice(side_length, A)
 
 
 
-jheatmap(ground_state)
 
-plot(energies)
-minenergy = minimum(energies)
-plot(energies .- prevfloat(floor(minenergy)), yscale=:log10)
+minenergy =
+    plot(energies .- prevfloat(floor(minenergy)), yscale=:log10)
+
+rem2pi
+mod2pi
