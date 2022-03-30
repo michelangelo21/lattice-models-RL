@@ -48,15 +48,15 @@ function energy(lattice)
 end
 
 
-function find_ground_state(side_length, A; steps=100)
+function find_ground_state(side_length, A; steps=100, η=0.001)
     lat = lattice(side_length, A)
     energies = [energy(lat)]
 
     @progress for i in 1:steps
         # ∇ = gradient(energy, state)[1]
         E, grads = withgradient(energy, lat)
-        δθ = -grads[1].θ * 1e-4
-        maximum(abs.(δθ)) > 1 && @warn δθ
+        δθ = -grads[1].θ * η
+        # maximum(abs.(δθ)) > 1 && @warn δθ
         # lat.θ = (lat.θ .- ∇θ .* 0.01) .% 1.0
         lat.θ .+= δθ
         # ? rem2pi
@@ -71,11 +71,21 @@ function find_ground_state(side_length, A; steps=100)
     return lat, energies
 end
 
-side_length = 20
+side_length = 10
 A = [Tuple(4π * rand(2) .- 2π) for i in 1:side_length, j in 1:side_length]
 
-ground_state, energies = find_ground_state(side_length, A; steps=10000)
-plot(energies)
+plt = plot()
+results = []
+for _ in 1:80
+    ground_state, energies = find_ground_state(side_length, A; steps=5000, η=0.001)
+    plot!(plt, energies)
+    push!(results, (ground_state, energies))
+end
+display(plt)
+savefig(plt, "randomxyzoom.png")
+xlims!(plt, 1000, 5000)
+ylims!(plt, -155, -140)
+
 plot(diff(energies))
 heatmap(ground_state.θ)
 
