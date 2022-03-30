@@ -5,10 +5,10 @@ plotlyjs()
 
 state2lattice(state) = π .* state
 
-mutable struct lattice{N}
+mutable struct lattice{N,T}
     # side_length::Int
-    θ::Matrix{Float64}
-    A::Matrix{Tuple{Float64,Float64}}
+    θ::Matrix{T}
+    A::Matrix{Tuple{T,T}}
     previdx::NTuple{N,Int64}
     # neighbours
 end
@@ -27,7 +27,7 @@ function lattice(side_length::Integer, A; T=Float64)
     #     ))
     #     for i in CartesianIndices(θ)
     # ]
-    return lattice(
+    return lattice{side_length,T}(
         θ,
         A,
         previdx
@@ -49,7 +49,7 @@ end
 
 
 function find_ground_state(side_length, A; steps=100, η=0.001)
-    lat = lattice(side_length, A)
+    lat = lattice(side_length, A; T=Float32)
     energies = [energy(lat)]
 
     @progress for i in 1:steps
@@ -74,13 +74,12 @@ end
 side_length = 10
 A = [Tuple(4π * rand(2) .- 2π) for i in 1:side_length, j in 1:side_length]
 
-plt = plot()
-results = []
-for _ in 1:80
-    ground_state, energies = find_ground_state(side_length, A; steps=5000, η=0.001)
-    plot!(plt, energies)
-    push!(results, (ground_state, energies))
-end
+# plt = plot()
+# results = []
+ground_state, energies = find_ground_state(side_length, A; steps=5000, η=0.001)
+plot!(plt, energies)
+push!(results, (ground_state, energies))
+# end
 display(plt)
 savefig(plt, "randomxyzoom.png")
 xlims!(plt, 1000, 5000)
