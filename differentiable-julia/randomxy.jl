@@ -2,6 +2,7 @@ using Zygote
 using Flux
 using ProgressLogging
 using Plots
+using ParameterSchedulers
 plotlyjs()
 
 state2lattice(state) = π .* state
@@ -14,8 +15,8 @@ mutable struct lattice{N,T}
     # neighbours
 end
 
-function lattice(side_length::Integer, A; T=Float64)
-    θ = 2π * rand(T, side_length, side_length)
+function lattice(side_length::Integer, A; dtype=Float64)
+    θ = 2π * rand(dtype, side_length, side_length)
     @assert size(A)[1:2] == size(θ) && size(A)[3] == 2
     previdx = Tuple(circshift(1:side_length, 1))
     nextidx = circshift(1:side_length, -1)
@@ -28,7 +29,7 @@ function lattice(side_length::Integer, A; T=Float64)
     #     ))
     #     for i in CartesianIndices(θ)
     # ]
-    return lattice{side_length,T}(
+    return lattice{side_length,dtype}(
         θ,
         A,
         previdx
@@ -54,49 +55,55 @@ function energy(lattice)
     #     @. cos(lattice.θ - θup + @view lattice.A[:, :, 1]) +
     #        cos(lattice.θ - θleft + @view lattice.A[:, :, 2])
     # )
-    return -sum(cos, lattice.θ - θup + @view lattice.A[:, :, 1]) -
-           sum(cos, lattice.θ - θleft + @view lattice.A[:, :, 2])
+    E = -sum(cos, lattice.θ - θup + @view lattice.A[:, :, 1]) -
+        sum(cos, lattice.θ - θleft + @view lattice.A[:, :, 2])
+    return E / size(lattice.θ, 1)^2
 end
 
 function energy_cat(lattice)
     θup = circshift(lattice.θ, (1, 0))
     θleft = circshift(lattice.θ, (0, 1))
-    return -sum(cos,
+    E = -sum(cos,
         cat(lattice.θ - θup, lattice.θ - θleft, dims=3) + lattice.A
     )
     # return -sum(cos,
     #     cat(lattice.θ - circshift(lattice.θ, (1, 0)), lattice.θ - circshift(lattice.θ, (0, 1)), dims=3) + lattice.A
     # )
+    return E / size(lattice.θ, 1)^2
 end
 
 
-function find_ground_state(side_length, A; steps=100, η=0.001, T=Float64)
-    lat = lattice(side_length, A; T)
+function find_ground_state(side_length, A; steps=100, temp_schedule=CosAnneal(λ0=2e-2, λ1=1e-4, period=10), dtype=Float64)
+    lat = lattice(side_length, A; dtype=dtype)
     energies = [energy(lat)]
 
-    # loss(θ) = 
     ps = params(lat.θ)
 
-    opt = Descent(η)
 
-    for i in 1:steps
+    opt = ADAM()
+    # opt = Descent(0.001)
+
+    for (T, step) in zip(temp_schedule, 1:steps)
+        # for step in 1:steps
+        # opt.eta = eta
         # ∇ = gradient(energy, state)[1]
         # E, grads = withgradient(() -> energy(lat), lat.θ)
-        E, grads = withgradient(() -> energy_cat(lat), ps)
         # θ̄ = -grads[ps[1]] * η
         # # maximum(abs.(δθ)) > 1 && @warn δθ
         # # lat.θ = (lat.θ .- ∇θ .* 0.01) .% 1.0
         # lat.θ .+= θ̄
+        E, grads = withgradient(() -> energy_cat(lat), ps)
         Flux.update!(opt, ps, grads)
-        # ? rem2pi
-        # lat.θ .= mod.(lat.θ, 2.0 * π) #! negative angles are not allowed
+        lat.θ .+= T * (rand(dtype, size(lat.θ)) .- 0.5)
         lat.θ .= mod2pi.(lat.θ)
+
 
 
         push!(energies, E)
 
         # @info i energy(state)
     end
+
 
     return lat, energies
 end
@@ -107,30 +114,42 @@ steps = 20_000
 
 # plt = plot()
 # results = []
-@benchmark ground_state, energies = find_ground_state(side_length, A;
+ground_state, energies = find_ground_state(side_length, A;
     steps=steps,
-    η=0.001,
-    T=Float32
+    dtype=Float32,
+    temp_schedule=CosAnneal(λ0=6e-2, λ1=0.0, period=1000)
+    # temp_schedule=Loop(Exp(λ=0.5, γ=0.9), 500)
 )
+plot(energies)
 
-results = []
-@simd for _ in 1:100
-    res = find_ground_state(side_length, A;
+@time results = map(1:100) do _
+    find_ground_state(side_length, A;
         steps=steps,
-        η=0.001,
-        T=Float32
+        dtype=Float32,
+        temp_schedule=CosAnneal(λ0=2.0, λ1=0.0, period=10000)
+        # temp_schedule=Loop(Exp(λ=0.5, γ=0.99), 500)
     )
-    push!(results, res)
-end
+end;
 plot(0:steps, last.(results))
-ylims!(-105, -90)
+ylims!(-1.6, -1.4)
+
+lasts = last.(results) .|> last
+sort!(lasts)
+plot(lasts)
+
+using Statistics
+minenergy = minimum(lasts)
+mean(lasts) - minenergy
+std(lasts)
+median(lasts) - minenergy
+
 
 -623.9576
 
-heatmap(results[9][1].θ)
-heatmap(results[38][1].θ)
-heatmap(results[13][1].θ)
-heatmap(results[17][1].θ)
+heatmap(results[2][1].θ)
+heatmap(results[59][1].θ)
+heatmap(results[42][1].θ)
+heatmap(results[74][1].θ)
 minimum(last.(results))
 
 # plot!(plt, energies)

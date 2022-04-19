@@ -2,7 +2,7 @@
 Two dimensional square lattice, taken from MonteCarlo.jl
 https://github.com/carstenbauer/MonteCarlo.jl
 """
-struct SquareLattice <: AbstractLattice
+struct SquareLattice #<: AbstractLattice
     L::Int
     sites::Int
     # row = up, right, down, left; col = siteidx
@@ -59,16 +59,16 @@ function build_neighbortable(::Type{SquareLattice}, lattice, L)
     return neighs, neighs_cartesian
 end
 
-# Implement AbstractLattice interface: mandatory
-@inline Base.length(s::SquareLattice) = s.sites
-@inline Base.size(s::SquareLattice) = (s.L, s.L)
+# # Implement AbstractLattice interface: mandatory
+# @inline Base.length(s::SquareLattice) = s.sites
+# @inline Base.size(s::SquareLattice) = (s.L, s.L)
 
-# Implement AbstractLattice interface: optional
-@inline neighbors_lookup_table(s::SquareLattice) = copy(s.neighs)
+# # Implement AbstractLattice interface: optional
+# @inline neighbors_lookup_table(s::SquareLattice) = copy(s.neighs)
 
-# HasNeighborsTable and HasBondsTable traits
-has_neighbors_table(::SquareLattice) = HasNeighborsTable()
-has_bonds_table(::SquareLattice) = HasBondsTable()
+# # HasNeighborsTable and HasBondsTable traits
+# has_neighbors_table(::SquareLattice) = HasNeighborsTable()
+# has_bonds_table(::SquareLattice) = HasBondsTable()
 
 positions(l::SquareLattice) = l.lattice |> CartesianIndices .|> Tuple .|> collect
 lattice_vectors(l::SquareLattice) = [[l.L, 0], [0, l.L]]

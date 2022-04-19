@@ -3,7 +3,29 @@ using ProgressLogging
 using Plots
 plotlyjs()
 
-state2lattice(state) = π .* state
+@inline state2lattice(state) = π .* state
+
+struct lattice{T<:Real,I<:NTuple}
+    side_length::Integer
+    θ::Matrix{T}
+    previdx::I |
+    nextidx::I
+    neighbours
+end
+
+function lattice(side_length::Integer; T=Float64)
+    θ = rand(T, side_length, side_length)
+    previdx = Tuple(mod1.((1:side_length) .- 1, side_length))
+    nextidx = Tuple(mod1.((1:side_length) .+ 1, side_length))
+    neighbours(i) = CartesianIndex.((
+        (i[1], previdx[i[2]]),
+        (i[1], nextidx[i[2]]),
+        (previdx[i[1]], i[2]),
+        (nextidx[i[1]], i[2]),
+    ))
+    return neighbours
+end
+
 
 function energy(state)
     lattice = state2lattice(state)
@@ -19,16 +41,39 @@ function energy(state)
     return E
 end
 
+side_length = 20
+previdx = circshift(1:side_length, -1)
+const NEIGHBOURS = [
+    CartesianIndex.((
+        (i[1], previdx[i[2]]),
+        # (i[1], nextidx[i[2]]),
+        (previdx[i[1]], i[2]),
+        # (nextidx[i[1]], i[2]),
+    ))
+    for i in CartesianIndices(ground_state)
+]
 
-function find_ground_state(side_length, steps = 100)
+function energy_cartesian(state)
+    lattice = state2lattice(state)
+    E = -sum(
+        cos(lattice[i] - lattice[j])
+        for i in eachindex(lattice)
+        for j in NEIGHBOURS[i]
+    )
+    return E
+end
+
+
+function find_ground_state(side_length, steps=100)
     state = rand(side_length, side_length) # random initial state [-1,1]
 
-    energies = [energy(state)]
+    energies = [energy_cartesian(state)]
 
     @progress for i in 1:steps
-        ∇ = gradient(energy, state)[1]
-        state = (state .- ∇ .* 0.01) .% 1
-        push!(energies, energy(state))
+        E, grads = withgradient(energy_cartesian, state)
+        δstate = -grads[1] * 0.01
+        state = mod.(state .+ δstate, 1.0)
+        push!(energies, E)
 
         # @info i energy(state)
     end
@@ -37,9 +82,12 @@ function find_ground_state(side_length, steps = 100)
 end
 
 ground_state, energies = find_ground_state(20, 2000)
+@time find_ground_state(20, 2000)
+@profview find_ground_state(20, 2000)
+@trace find_ground_state(20, 2000)
 
 heatmap(ground_state)
 
 plot(energies)
 minenergy = minimum(energies)
-plot(energies .- prevfloat(floor(minenergy)), yscale = :log10)
+plot(energies .- prevfloat(floor(minenergy)), yscale=:log10)
