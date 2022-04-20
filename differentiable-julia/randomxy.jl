@@ -7,7 +7,7 @@ plotlyjs()
 
 state2lattice(state) = π .* state
 
-mutable struct lattice{N,T}
+mutable struct Lattice{N,T}
     # side_length::Int
     θ::Matrix{T}
     A::Array{T,3}
@@ -15,7 +15,7 @@ mutable struct lattice{N,T}
     # neighbours
 end
 
-function lattice(side_length::Integer, A; dtype=Float64)
+function Lattice(side_length::Integer, A; dtype=Float64)
     θ = 2π * rand(dtype, side_length, side_length)
     @assert size(A)[1:2] == size(θ) && size(A)[3] == 2
     previdx = Tuple(circshift(1:side_length, 1))
@@ -29,7 +29,7 @@ function lattice(side_length::Integer, A; dtype=Float64)
     #     ))
     #     for i in CartesianIndices(θ)
     # ]
-    return lattice{side_length,dtype}(
+    return Lattice{side_length,dtype}(
         θ,
         A,
         previdx
@@ -47,7 +47,7 @@ end
 #     )
 # end
 
-function energy(lattice)
+function energy(lattice::Lattice)
     # lattice.θ = 2π .* lattice.θ 
     θup = circshift(lattice.θ, (1, 0))
     θleft = circshift(lattice.θ, (0, 1))
@@ -57,10 +57,10 @@ function energy(lattice)
     # )
     E = -sum(cos, lattice.θ - θup + @view lattice.A[:, :, 1]) -
         sum(cos, lattice.θ - θleft + @view lattice.A[:, :, 2])
-    return E / size(lattice.θ, 1)^2
+    return E / length(lattice.θ)
 end
 
-function energy_cat(lattice)
+function energy_cat(lattice::Lattice)
     θup = circshift(lattice.θ, (1, 0))
     θleft = circshift(lattice.θ, (0, 1))
     E = -sum(cos,
@@ -69,12 +69,12 @@ function energy_cat(lattice)
     # return -sum(cos,
     #     cat(lattice.θ - circshift(lattice.θ, (1, 0)), lattice.θ - circshift(lattice.θ, (0, 1)), dims=3) + lattice.A
     # )
-    return E / size(lattice.θ, 1)^2
+    return E / length(lattice.θ)
 end
 
 
 function find_ground_state(side_length, A; steps=100, temp_schedule=CosAnneal(λ0=2e-2, λ1=1e-4, period=10), dtype=Float64)
-    lat = lattice(side_length, A; dtype=dtype)
+    lat = Lattice(side_length, A; dtype=dtype)
     energies = [energy(lat)]
 
     ps = params(lat.θ)
@@ -173,7 +173,7 @@ minimum(energies)
 
 side_length = 5
 A = [Tuple(rand(2)) for i in 1:side_length, j in 1:side_length]
-lat = lattice(side_length, A)
+lat = Lattice(side_length, A)
 @trace energy(lat)
 @benchmark energy(lat)
 
