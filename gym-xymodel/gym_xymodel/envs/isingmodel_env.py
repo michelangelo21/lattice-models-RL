@@ -58,7 +58,7 @@ class IsingModelEnv(gym.Env):
         # Done when energy is minimal, and all spins are the same
         done = np.all(self.state == self.state[0])
         info = {"energy": self.energy}
-        return self.state, reward, done, info
+        return self.state, float(reward), bool(done), info
 
     def reset(self):
         self.state = self.observation_space.sample()
