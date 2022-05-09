@@ -1,3 +1,5 @@
+using BenchmarkTools
+
 side_length = 3
 T = Float32
 A = 4π * rand(T, side_length, side_length, 2) .- 2π
@@ -41,3 +43,26 @@ ps = params(lat.θ)
 
 @benchmark withgradient($energy, $lat)
 @benchmark withgradient($energy_cat, $lat)
+
+using Random
+
+xoshiro = Random.Xoshiro()
+mersenne = Random.MersenneTwister()
+device = Random.RandomDevice()
+
+@benchmark rand(100, 100)
+@benchmark rand($xoshiro, 100, 100)
+@benchmark rand($mersenne, 100, 100)
+@benchmark rand($device, 100, 100)
+
+tmp = rand(3, 3)
+
+@benchmark rand(Float64, size($tmp))
+@benchmark rand(Float64, $(3, 3))
+size(tmp)
+Type
+
+t = 1:1000 |> collect
+s = CosAnneal(λ0=5e-2, λ1=0e-5, period=500)
+s = Loop(Exp(λ=8e-2, γ=0.9), 100)
+plot(t, s.(t);)
