@@ -9,3 +9,8 @@ register(
     id="isingmodel-v0",
     entry_point="gym_xymodel.envs:IsingModelEnv",
 )
+
+register(
+    id="isingmodel1d-v0",
+    entry_point="gym_xymodel.envs:IsingModel1DEnv",
+)
