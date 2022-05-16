@@ -7,6 +7,7 @@ import torch
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
 from gym.wrappers import TimeLimit
 from stable_baselines3 import DQN, PPO
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
@@ -43,17 +44,23 @@ class CustomCNN(BaseFeaturesExtractor):
         # Compute shape by doing one forward pass
         with th.no_grad():
             #! code repetition
-            padded_obs = F.pad(
-                observation_space.sample()[None], pad=(1, 1), mode="circular"
-            )
-            n_flatten = self.cnn(th.as_tensor(padded_obs[None][None]).float()).shape[1]
+            n_flatten = self.cnn(
+                F.pad(
+                    th.as_tensor(observation_space.sample()[None])
+                    .unsqueeze(-2)
+                    .float(),
+                    pad=(1, 1),
+                    mode="circular",
+                )
+            ).shape[1]
 
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        # circular boundry conditions
-        padded_obs = F.pad(observations, pad=(1, 1), mode="circular")
-        return self.linear(self.cnn(padded_obs))
+        # circular boundry conditions and add channel dimmension
+        return self.linear(
+            self.cnn(F.pad(observations.unsqueeze(-2), pad=(1, 1), mode="circular"))
+        )
 
 
 policy_kwargs = dict(
@@ -61,16 +68,17 @@ policy_kwargs = dict(
     features_extractor_kwargs=dict(features_dim=128),
 )
 
-# # %%
-# obs = env.observation_space.sample()
+# %%
+obs = env.observation_space.sample()
 # obs.size
-# obs = torch.from_numpy(obs)
+obs = torch.from_numpy(obs)
 # m = nn.Conv1d(1, 6, 3, padding=1)
 # # input = torch.randn(1, 1, 8)
 # # # m(obs)
 # # m(input)
 # obs
 # m(obs)
+# F.pad(obs, pad=(1, 1), mode="circular")
 
 
 # # %%
@@ -84,8 +92,8 @@ policy_kwargs = dict(
 
 
 # %% training
-date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-folder_path = f"../results/ising1D/{date}_{side_length}"
+date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
+folder_path = f"../results/ising1D/{date}_L{side_length}"
 # model = PPO("MlpPolicy", env, tensorboard_log=folder_path)
 model = PPO(
     "CnnPolicy",
@@ -95,7 +103,7 @@ model = PPO(
     verbose=True,
 )
 print(model.policy.features_extractor.cnn)
-model.learn(total_timesteps=100_000)
+model.learn(total_timesteps=30_000)
 model.save(f"{folder_path}/model")
 
 # %%
@@ -114,7 +122,6 @@ for i in range(200):
     #   print(f"{i=}, {reward=}")
     #   env.render()
 
-import matplotlib.pyplot as plt
 
 plt.plot(range(len(energies)), energies)
 

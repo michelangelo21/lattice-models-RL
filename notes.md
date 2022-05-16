@@ -15,5 +15,6 @@ Uczy się układać Isinga tylko na jedną stronę (zawsze tylko +1 lub -1).
 
 # TODO
 - [x] Ising1D
-- [] CNN
+- [x] CNN
+    - [] zobaczyć, czy da się sieć CNN nauczoną na mniejszym układzie przenieść na większy
 - [] ResNet
