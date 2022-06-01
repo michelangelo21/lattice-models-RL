@@ -14,3 +14,8 @@ register(
     id="isingmodel1d-v0",
     entry_point="gym_xymodel.envs:IsingModel1DEnv",
 )
+
+register(
+    id="isingmodel1dendrew-v0",
+    entry_point="gym_xymodel.envs:IsingModel1DEndRewEnv",
+)
