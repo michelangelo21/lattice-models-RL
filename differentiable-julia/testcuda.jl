@@ -1,6 +1,7 @@
 using CUDA
 using BenchmarkTools
 using Zygote
+using ShiftedArrays
 
 function foo(x)
     xleft = circshift(x, (0, 1))
@@ -9,6 +10,21 @@ function foo(x)
         cos.(x - xleft) + cos.(x - xup))
     return E
 end
+
+function foo_shifted(x)
+    xleft = ShiftedArrays.circshift(x, (0, 1))
+    xup = ShiftedArrays.circshift(x, (-1, 0))
+    E = -sum(
+        cos.(x - xleft) + cos.(x - xup))
+    return E
+end
+
+function foo(x, xleft, xup)
+    E = -sum(
+        cos.(x - xleft) + cos.(x - xup))
+    return E
+end
+
 
 function fooitr(x, previdx)
     ni, nj = size(x)
@@ -19,11 +35,6 @@ function fooitr(x, previdx)
     )
 end
 
-function foo(x, xleft, xup)
-    E = -sum(
-        cos.(x - xleft) + cos.(x - xup))
-    return E
-end
 
 function foo_vec(x)
     xleft = circshift(x, (0, 1, 0))
@@ -95,3 +106,14 @@ foo_vec(tv)
 @benchmark [foo(s) for s in eachslice($tv, dims=(3))]
 @benchmark [foo(s) for s in eachslice($cutv, dims=(3))]
 
+
+using ShiftedArrays
+tmp = reshape(collect(1.0:16), (4,4))
+tmpright = ShiftedArrays.circshift(tmp, (0, 1))
+tmpup = ShiftedArrays.circshift(tmp, (1, 0))
+
+@benchmark foo($tmp)
+@benchmark foo_shifted($tmp)
+
+@benchmark gradient($foo, $tmp)
+@benchmark gradient($foo_shifted, $tmp)
