@@ -15,24 +15,29 @@ class XYmodelEnv(gym.Env):
         # lattice side_len x side_len
         self.side_len = side_len
 
+        # self.observation_space = spaces.Box(
+        #     low=0, high=255, shape=(1, side_len, side_len), dtype=np.uint8
+        # ) # cnn
+
         self.observation_space = spaces.Box(
-            low=-1, high=1, shape=(self.side_len**2,), dtype=np.float32
-        )
+            low=0, high=255, shape=(side_len**2,), dtype=np.uint8
+        )  # mlp
 
         self.state = self.observation_space.sample()
         self.energy = self.compute_energy()
 
-        self.action_space = spaces.Tuple(
-            (
-                spaces.Discrete(self.side_len**2),
-                spaces.Box(
-                    low=-1,
-                    high=1,
-                    shape=(self.side_len**2,),
-                    dtype=np.float32,
-                ),
-            )
-        )
+        # self.action_space = spaces.Box(
+        #     low=-5,
+        #     high=5,
+        #     shape=(1, self.side_len, self.side_len),
+        #     dtype=np.int8,
+        # ) # cnn not working
+        self.action_space = spaces.Box(
+            low=-5,
+            high=5,
+            shape=(self.side_len**2,),
+            dtype=np.int8,
+        )  # mlp
 
         # self.action_space = spaces.Box(
         #     low=-1, high=1, shape=(self.side_len**2,), dtype=np.float32
@@ -42,10 +47,15 @@ class XYmodelEnv(gym.Env):
         """
         Convert state to lattice [-1,1] -> [-pi/2,pi/2]
         """
-        lattice = np.reshape(np.pi / 2 * self.state, (self.side_len, self.side_len))
+        lattice = np.reshape(
+            2 * np.pi / 256 * self.state, (self.side_len, self.side_len)
+        )
         return lattice
 
     def compute_energy(self):
+        """
+        Computes energy of the current state
+        """
         # J=0 except for nearest neighbor
         lattice = self.state_to_lattice()
         energy = -sum(
@@ -57,13 +67,11 @@ class XYmodelEnv(gym.Env):
         return energy
 
     def step(self, action):
-        choosen_spin = action[0]
-        choosen_rotation = action[1][choosen_spin]
-
         # self.state = (self.state + 1 + action) % 2 - 1
-        self.state[choosen_spin] = (
-            self.state[choosen_spin] + 1 + choosen_rotation
-        ) % 2 - 1
+        # self.state[choosen_spin] = (
+        #     self.state[choosen_spin] + 1 + choosen_rotation
+        # ) % 2 - 1
+        self.state += np.uint8(action)
         new_energy = self.compute_energy()
         # finding minimal energy state, reward is difference between old and new energy
         reward = -(new_energy - self.energy)
