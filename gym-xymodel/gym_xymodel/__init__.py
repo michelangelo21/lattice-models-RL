@@ -19,3 +19,8 @@ register(
     id="isingmodel1dendrew-v0",
     entry_point="gym_xymodel.envs:IsingModel1DEndRewEnv",
 )
+
+register(
+    id="falicovkimball-v0",
+    entry_point="gym_xymodel.envs:FalicovKimball1DEnv",
+)
