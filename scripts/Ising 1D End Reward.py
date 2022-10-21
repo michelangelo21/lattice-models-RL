@@ -13,8 +13,8 @@ from stable_baselines3 import DQN, PPO
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 # %%
-side_length = 8
-env = gym.make("gym_xymodel:isingmodel1dendrew-v0", L=side_length, max_steps=8)
+side_length = 4
+env = gym.make("gym_xymodel:isingmodel1dendrew-v0", L=side_length, max_steps=4)
 env = TimeLimit(env, max_episode_steps=100)
 from stable_baselines3.common.env_checker import check_env
 
@@ -68,32 +68,9 @@ policy_kwargs = dict(
     features_extractor_kwargs=dict(features_dim=128),
 )
 
-# %%
-obs = env.observation_space.sample()
-# obs.size
-obs = torch.from_numpy(obs)
-# m = nn.Conv1d(1, 6, 3, padding=1)
-# # input = torch.randn(1, 1, 8)
-# # # m(obs)
-# # m(input)
-# obs
-# m(obs)
-# F.pad(obs, pad=(1, 1), mode="circular")
-
-
-# # %%
-
-# from gym import spaces
-
-# spaces.Box(low=0, high=1, shape=(1, 8))
-# m(input).shape
-# F.pad(input, (1, 1), mode="circular").shape
-# input.shape
-
-
 # %% training
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
-folder_path = f"../results/ising1D_endreward/{date}_L{side_length}"
+folder_path = f"../results/ising1D_endreward_finish/{date}_L{side_length}"
 # model = PPO("MlpPolicy", env, tensorboard_log=folder_path)
 model = PPO(
     "CnnPolicy",
@@ -103,7 +80,7 @@ model = PPO(
     verbose=True,
 )
 print(model.policy.features_extractor.cnn)
-model.learn(total_timesteps=200_000)
+model.learn(total_timesteps=30_000)
 model.save(f"{folder_path}/model")
 
 # %%
@@ -136,3 +113,4 @@ for i in range(10):
     env.render()
 
 # %%
+model.policy
