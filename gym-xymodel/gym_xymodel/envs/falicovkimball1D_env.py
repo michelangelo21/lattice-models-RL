@@ -19,7 +19,6 @@ class FalicovKimball1DEnv(gym.Env):
         U: float = 2.0,
         max_steps: int = 16,
         isPBC: bool = True,
-        seed=None,
     ):
         """Initialization of the gym environment"""
         self.L = L  # lattice side_length
@@ -33,9 +32,9 @@ class FalicovKimball1DEnv(gym.Env):
         self.observation_space = spaces.MultiBinary(self.L)
         # states are 0 or 1
         self.state = self.random_state()
-        self.energy = self.compute_energy()
+        # self.energy = self.compute_energy()
         self.action_space = spaces.MultiDiscrete(
-            [self.L, self.L]
+            [self.L, self.L, 2]
         )  # third for pass action (end episode)
 
     def random_state(self):
@@ -65,29 +64,32 @@ class FalicovKimball1DEnv(gym.Env):
 
         # finish round and do nothing,
         # this prevents agent from bouncing from the ground state
-        # if action[2]:
-        #     reward = -self.compute_energy()
-        #     done = True
-        #     return self.state, float(reward), bool(done), info
-        # else:
-        # ? maybe swap (symetries, different mask)
-        if self.state[action[0]] == 1 and self.state[action[1]] == 0:
-            self.state[action[0]] = 0
-            self.state[action[1]] = 1
-
-        self.step_no += 1
-        if self.step_no > self.max_steps:
-            done = True
+        if action[2] and self.step_no > self.max_steps // 2:
             reward = -self.compute_energy()
+            done = True
+            return self.state, float(reward), bool(done), info
         else:
-            done = False
-            reward = 0
+            # ? maybe swap (symetries, different mask) - slower learning
+            if self.state[action[0]] and not self.state[action[1]]:
+                self.state[action[0]] = 0
+                self.state[action[1]] = 1
 
-        return self.state, float(reward), bool(done), info
+            self.step_no += 1
+            if self.step_no > self.max_steps:
+                done = True
+                reward = -self.compute_energy()
+            else:
+                done = False
+                reward = 0
 
-    # TODO add masking feature
+            return self.state, float(reward), bool(done), info
+
     def action_masks(self):
-        pass
+        # return np.hstack((self.state, np.logical_not(self.state)))
+        if self.step_no <= self.max_steps // 2:
+            return np.hstack((self.state, np.logical_not(self.state), [True, False]))
+        else:
+            return np.hstack((self.state, np.logical_not(self.state), [True, True]))
 
     def reset(self):
         self.state = self.random_state()
