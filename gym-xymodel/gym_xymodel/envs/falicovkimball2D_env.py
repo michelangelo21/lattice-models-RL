@@ -13,12 +13,12 @@ class FalicovKimball2DEnv(gym.Env):
 
     def __init__(
         self,
-        L: int = 16,
+        L: int = 4,
         Ne: int = 8,
         t: float = 1.0,
         U: float = 2.0,
         max_steps: int = 16,
-        isPBC: bool = True,
+        # isPBC: bool = True,
     ):
         """Initialization of the gym environment"""
         self.L = L  # lattice side_length
@@ -27,37 +27,45 @@ class FalicovKimball2DEnv(gym.Env):
         self.U = U
         self.max_steps = max_steps
         self.step_no = 1
-        self.isPBC = isPBC
+        self.isPBC = True  # TODO add case without PBC
 
-        self.observation_space = spaces.MultiBinary(self.L)
+        # kinetic part of the Hamiltonian doesn't depend on the state
+        H_kinetic = np.zeros((L**2, L**2), dtype=np.float32)
+        numbering = np.arange(L**2).reshape(L, L)
+        for x in range(L):
+            for y in range(L):
+                i = numbering[x, y]  # i = x * L + y,
+                j = numbering[x, y - 1]  # left
+                H_kinetic[i, j] = t
+                H_kinetic[j, i] = t
+                j = numbering[x - 1, y]  # up
+                H_kinetic[i, j] = t
+                H_kinetic[j, i] = t
+
+        self.H_kinetic = H_kinetic
+
+        self.observation_space = spaces.MultiBinary(self.L**2)
         # states are 0 or 1
         self.state = self.random_state()
         # self.energy = self.compute_energy()
         self.action_space = spaces.MultiDiscrete(
-            [self.L, self.L, 2]
+            [self.L**2, self.L**2, 2]
         )  # third for pass action (end episode)
 
     def random_state(self):
-        pos = np.random.choice(self.L, size=self.Ne, replace=False)
-        lattice = np.full(self.L, False)
+        pos = np.random.choice(self.L**2, size=self.Ne, replace=False)
+        lattice = np.full(self.L**2, False)
         lattice[pos] = True
         return lattice
 
     def compute_energy(self):
         """Computes energy of the current state per node."""
-        above_diag = np.diag(self.t * np.ones(self.L - 1), k=1)
-        below_diag = np.diag(np.conj(self.t) * np.ones(self.L - 1), k=-1)
-        H_kinetic = above_diag + below_diag
-        if self.isPBC:
-            H_kinetic[0, -1] = np.conj(self.t)
-            H_kinetic[-1, 0] = self.t
-
-        H = -H_kinetic - np.diag(self.U * self.state)
+        H = -self.H_kinetic - np.diag(self.U * self.state)
 
         w, _ = np.linalg.eigh(H)
 
         energy = np.sum(w[: self.Ne])
-        return energy / self.L
+        return energy / self.L**2
 
     def step(self, action):
         info = {}
