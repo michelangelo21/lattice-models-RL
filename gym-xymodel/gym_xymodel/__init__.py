@@ -21,6 +21,11 @@ register(
 )
 
 register(
-    id="falicovkimball-v0",
+    id="falicovkimball1D-v0",
     entry_point="gym_xymodel.envs:FalicovKimball1DEnv",
+)
+
+register(
+    id="falicovkimball2D-v0",
+    entry_point="gym_xymodel.envs:FalicovKimball2DEnv",
 )
