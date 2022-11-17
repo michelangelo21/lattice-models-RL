@@ -43,6 +43,7 @@ class FalicovKimball1DEnv(gym.Env):
         lattice[pos] = True
         return lattice
 
+    # TODO move H_kinetic to __init__
     def compute_energy(self):
         """Computes energy of the current state per node."""
         above_diag = np.diag(self.t * np.ones(self.L - 1), k=1)
