@@ -22,6 +22,9 @@ class Ising2DEnv(gym.Env):
         self.state = self.observation_space.sample()
         self.action_space = spaces.Discrete(self.L**2 + 1)
 
+        self.min_energy = float("inf")
+        self.min_state = None
+
     def state_to_lattice(self):
         """
         Convert state to lattice [0,1] -> [-1,1]
@@ -32,11 +35,19 @@ class Ising2DEnv(gym.Env):
     def compute_energy(self):
         # J=0 except for nearest neighbor
         lattice = self.state_to_lattice()
-        energy = -self.J * sum(
-            lattice[i, j] * (lattice[i - 1, j] + lattice[i, j - 1])
-            for i in range(self.L)
-            for j in range(self.L)
+        energy = (
+            -self.J
+            * sum(
+                lattice[i, j] * (lattice[i - 1, j] + lattice[i, j - 1])
+                for i in range(self.L)
+                for j in range(self.L)
+            )
+            / self.L**2
         )
+
+        if energy < self.min_energy:
+            self.min_energy = energy
+            self.min_state = self.state
         return energy
 
     def step(self, action):
