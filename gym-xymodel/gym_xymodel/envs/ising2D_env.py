@@ -4,9 +4,9 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 
 
-class IsingModelEnv(gym.Env):
+class Ising2DEnv(gym.Env):
     """
-    IsingModelEnv contains SIDE_LENGTH x SIDE_LENGTH lattice
+    Ising2DEnv contains SIDE_LENGTH x SIDE_LENGTH lattice
     """
 
     metadata = {"render.modes": ["human"]}
