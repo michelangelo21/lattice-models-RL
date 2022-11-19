@@ -16,8 +16,9 @@ class CustomCNN(BaseFeaturesExtractor):
     def __init__(self, observation_space, features_dim: int = 256):
         super().__init__(observation_space, features_dim)
         # Re-ordering will be done by pre-preprocessing or wrapper
-        conv_features_dim = 64
+        conv_features_dim = 32
         self.L = int(np.sqrt(observation_space.shape[0]))
+        # TODO refactor to ConvBlock
         self.cnn = nn.Sequential(  # 1 input channel
             nn.Conv2d(
                 1, conv_features_dim, kernel_size=3, padding=1, padding_mode="zeros"

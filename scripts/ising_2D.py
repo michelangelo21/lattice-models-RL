@@ -11,7 +11,7 @@ from src.custom_cnn import CustomCNN
 
 # %%
 
-SIDE_LENGTH = 6
+SIDE_LENGTH = 4
 env = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH, J=1.0)
 env = TimeLimit(env, max_episode_steps=SIDE_LENGTH**2)
 
@@ -19,13 +19,14 @@ check_env(env)
 
 policy_kwargs = dict(
     features_extractor_class=CustomCNN,
-    features_extractor_kwargs=dict(features_dim=128),
+    features_extractor_kwargs=dict(features_dim=32),
+    net_arch=[{"pi": [32], "vf": [32]}],
 )
 
 
 # %%
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
-folder_path = f"../results/ising2D/{date}_L{SIDE_LENGTH}_CNN"
+folder_path = f"../results/ising2D/{date}_L{SIDE_LENGTH}_3CNN_32"
 
 # model = PPO("MlpPolicy", env, tensorboard_log=folder_path, verbose=1)
 model = PPO(
@@ -35,5 +36,7 @@ model = PPO(
     tensorboard_log=folder_path,
     verbose=1,
 )
+
+#%%
 model.learn(200_000)
 model.save(f"{folder_path}/model")
