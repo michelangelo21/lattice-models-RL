@@ -25,15 +25,15 @@ class CustomCNN(BaseFeaturesExtractor):
             ),  # 8 possible combinations
             nn.BatchNorm2d(conv_features_dim),
             nn.ReLU(),
-            nn.Conv2d(
-                conv_features_dim,
-                conv_features_dim,
-                kernel_size=3,
-                padding=1,
-                padding_mode="zeros",
-            ),
-            nn.BatchNorm2d(conv_features_dim),
-            nn.ReLU(),
+            # nn.Conv2d(
+            #     conv_features_dim,
+            #     conv_features_dim,
+            #     kernel_size=3,
+            #     padding=1,
+            #     padding_mode="zeros",
+            # ),
+            # nn.BatchNorm2d(conv_features_dim),
+            # nn.ReLU(),
             nn.Conv2d(
                 conv_features_dim, 3, kernel_size=3, padding=1, padding_mode="zeros"
             ),
