@@ -41,7 +41,7 @@ class Ising2DEnv(gym.Env):
                 lattice[i, j] * (lattice[i - 1, j] + lattice[i, j - 1])
                 for i in range(self.L)
                 for j in range(self.L)
-            )
+            )  # TODO check which method is quickest
             / self.L**2
         )
 
