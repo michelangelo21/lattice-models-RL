@@ -24,14 +24,14 @@ check_env(env)
 
 
 # %%
-date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
-folder_path = f"../results/ising2D/L{SIDE_LENGTH}/{date}_2CNN_feat32"
-
 policy_kwargs = dict(
     features_extractor_class=CustomCNN,
-    features_extractor_kwargs=dict(features_dim=32),
-    net_arch=[{"pi": [32], "vf": [32]}],
+    features_extractor_kwargs=dict(features_dim=64),
+    net_arch=[{"pi": [64], "vf": [64]}],
 )
+
+date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
+folder_path = f"../results/ising2D/L{SIDE_LENGTH}/{date}_3CNNcirc_feat64"
 
 # model = PPO("MlpPolicy", env, tensorboard_log=folder_path, verbose=1)
 model = PPO(
@@ -46,7 +46,8 @@ eval_callback = EvalCallback(
     eval_env,
     best_model_save_path=folder_path + "/logs/",
     log_path=folder_path + "/logs/",
-    eval_freq=2000,
+    n_eval_episodes=10,
+    eval_freq=10_000,
     deterministic=True,
     render=False,
 )
