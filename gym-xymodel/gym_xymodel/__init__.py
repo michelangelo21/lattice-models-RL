@@ -9,6 +9,10 @@ register(
     id="ising2d-v0",
     entry_point="gym_xymodel.envs:Ising2DEnv",
 )
+register(
+    id="ising2d_2ndneighbor-v0",
+    entry_point="gym_xymodel.envs:Ising2D2ndNeighborEnv",
+)
 
 register(
     id="isingmodel1d-v0",
