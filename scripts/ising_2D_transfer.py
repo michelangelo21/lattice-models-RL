@@ -1,5 +1,6 @@
 # %%
 from datetime import datetime
+import copy
 
 import gym
 import numpy as np
@@ -8,10 +9,17 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.env_checker import check_env
 
-# from src.custom_cnn import CustomCNN
 from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
 
 # %%
+
+SIDE_LENGTH_0 = 4
+env0 = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH_0, J=1.0)
+env0 = TimeLimit(env0, max_episode_steps=SIDE_LENGTH_0**2)
+model0 = PPO.load(
+    "../results/ising2D/L4/2022-11-23T205409_1_2CNNcirc_filters64/model.zip", env=env0
+)
+
 
 SIDE_LENGTH = 4
 env = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH, J=1.0)
@@ -31,7 +39,9 @@ policy_kwargs = dict(
 )
 
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
-folder_path = f"../results/ising2D/L{SIDE_LENGTH}/{date}_1_2CNNcirc_filters64"
+folder_path = (
+    f"../results/ising2D/L{SIDE_LENGTH}/{date}_1_2CNNcirc_filters64_transfer_withgrad"
+)
 
 # model = PPO("MlpPolicy", env, tensorboard_log=folder_path, verbose=1)
 model = PPO(
@@ -42,6 +52,12 @@ model = PPO(
     verbose=1,
 )
 
+# model.policy.mlp_extractor.shared_net = model0.policy.mlp_extractor.shared_net
+# model.policy.mlp_extractor.poicy_net = model0.policy.mlp_extractor.policy_net
+# model.policy.mlp_extractor.value_net = model0.policy.mlp_extractor.value_net
+# model.policy.mlp_extractor = copy.deepcopy(model0.policy.mlp_extractor)
+# model.policy.mlp_extractor.requires_grad_(False)
+
 eval_callback = EvalCallback(
     eval_env,
     best_model_save_path=folder_path + "/logs/",
@@ -51,6 +67,7 @@ eval_callback = EvalCallback(
     deterministic=True,
     render=False,
 )
+
 
 #%%
 model.learn(200_000, callback=eval_callback)
