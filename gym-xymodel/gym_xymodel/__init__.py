@@ -33,3 +33,8 @@ register(
     id="falicovkimball2D-v0",
     entry_point="gym_xymodel.envs:FalicovKimball2DEnv",
 )
+
+register(
+    id="dzyaloshinskiimoriya2D-v0",
+    entry_point="gym_xymodel.envs:DzyaloshinskiiMoriya2DEnv",
+)
