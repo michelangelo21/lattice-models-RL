@@ -17,7 +17,7 @@ SIDE_LENGTH_0 = 4
 env0 = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH_0, J=1.0)
 env0 = TimeLimit(env0, max_episode_steps=SIDE_LENGTH_0**2)
 model0 = PPO.load(
-    "../results/ising2D/L4/2022-11-23T205409_1_2CNNcirc_filters64/model.zip", env=env0
+    "../results/ising2D/L4/2022-11-24T145201_1_2CNNcirc_filters64/model.zip", env=env0
 )
 
 
@@ -52,11 +52,11 @@ model = PPO(
     verbose=1,
 )
 
-# model.policy.mlp_extractor.shared_net = model0.policy.mlp_extractor.shared_net
-# model.policy.mlp_extractor.poicy_net = model0.policy.mlp_extractor.policy_net
-# model.policy.mlp_extractor.value_net = model0.policy.mlp_extractor.value_net
+model.policy.mlp_extractor.shared_net = model0.policy.mlp_extractor.shared_net
+model.policy.mlp_extractor.poicy_net = model0.policy.mlp_extractor.policy_net
+model.policy.mlp_extractor.value_net = model0.policy.mlp_extractor.value_net
 # model.policy.mlp_extractor = copy.deepcopy(model0.policy.mlp_extractor)
-# model.policy.mlp_extractor.requires_grad_(False)
+model.policy.mlp_extractor.requires_grad_(False)
 
 eval_callback = EvalCallback(
     eval_env,
@@ -69,6 +69,6 @@ eval_callback = EvalCallback(
 )
 
 
-#%%
+# %%
 model.learn(200_000, callback=eval_callback)
 model.save(f"{folder_path}/model")

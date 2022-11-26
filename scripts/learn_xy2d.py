@@ -14,11 +14,11 @@ from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
 # %%
 
 SIDE_LENGTH = 4
-env = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH, J=1.0)
-env = TimeLimit(env, max_episode_steps=SIDE_LENGTH**2)
+env = gym.make("gym_xymodel:xy2d-v0", L=SIDE_LENGTH, max_episode_steps=4**2)
+# env = TimeLimit(env, max_episode_steps=SIDE_LENGTH**2)
 
-eval_env = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH, J=1.0)
-eval_env = TimeLimit(eval_env, max_episode_steps=2 * SIDE_LENGTH**2)
+eval_env = gym.make("gym_xymodel:xy2d-v0", L=SIDE_LENGTH, max_episode_steps=2 * 4**2)
+# eval_env = TimeLimit(eval_env, max_episode_steps=2 * SIDE_LENGTH**2)
 
 
 check_env(env)
@@ -31,16 +31,17 @@ policy_kwargs = dict(
 )
 
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
-folder_path = f"../results/ising2D/L{SIDE_LENGTH}/{date}_1_2CNNcirc_filters64"
+# folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
+folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp"
 
-# model = PPO("MlpPolicy", env, tensorboard_log=folder_path, verbose=1)
-model = PPO(
-    CustomActorCriticPolicy,
-    env,
-    policy_kwargs=policy_kwargs,
-    tensorboard_log=folder_path,
-    verbose=1,
-)
+model = PPO("MlpPolicy", env, tensorboard_log=folder_path, verbose=1)
+# model = PPO(
+#     CustomActorCriticPolicy,
+#     env,
+#     policy_kwargs=policy_kwargs,
+#     tensorboard_log=folder_path,
+#     verbose=1,
+# )
 
 eval_callback = EvalCallback(
     eval_env,
@@ -55,3 +56,5 @@ eval_callback = EvalCallback(
 # %%
 model.learn(200_000, callback=eval_callback)
 model.save(f"{folder_path}/model")
+
+# %%

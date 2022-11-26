@@ -1,4 +1,4 @@
-from gym_xymodel.envs.xymodel_env import XYmodelEnv
+from gym_xymodel.envs.xymodel_env import XY2DEnv
 from gym_xymodel.envs.ising2d_env import Ising2DEnv
 from gym_xymodel.envs.ising2d_2ndneighbor_env import Ising2D2ndNeighborEnv
 from gym_xymodel.envs.isingmodel1D_env import IsingModel1DEnv

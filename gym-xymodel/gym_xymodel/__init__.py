@@ -2,8 +2,8 @@ from importlib.metadata import entry_points
 from gym.envs.registration import register
 
 register(
-    id="xymodel-v0",
-    entry_point="gym_xymodel.envs:XYmodelEnv",
+    id="xy2d-v0",
+    entry_point="gym_xymodel.envs:XY2DEnv",
 )
 register(
     id="ising2d-v0",
