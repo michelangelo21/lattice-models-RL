@@ -29,30 +29,24 @@ check_env(env)
 
 
 # %%
-# policy_kwargs = dict(
-#     features_extractor_class=ReshapeExtractor,
-#     net_arch={"n_filters": 64, "n_blocks": 2, "L": SIDE_LENGTH},
-# )
-n_features = 128
 policy_kwargs = dict(
-    net_arch=[
-        n_features,
-        n_features,
-        dict(vf=[n_features, n_features], pi=[n_features, n_features]),
-    ]
+    features_extractor_class=ReshapeExtractor,
+    net_arch={"n_filters": 64, "n_blocks": 2, "L": SIDE_LENGTH},
 )
 
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 # folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
-folder_path = f"../results/dzmoriya2D/L{SIDE_LENGTH}/{date}_mlp_correct_spherical_nfeatures{n_features}"
+# folder_path = f"../results/dzmoriya2D/L{SIDE_LENGTH}/{date}_mlp_correct_spherical"
+folder_path = "../results/dzmoriya2D/L4/2022-11-27T122342_mlp_correct_spherical"
 
-model = PPO(
-    "MlpPolicy",
-    env,
+model = PPO.load(
+    folder_path + "/model",
+    env=env,
     tensorboard_log=folder_path,
     verbose=1,
-    policy_kwargs=policy_kwargs,
 )
+
+# model = PPO("MlpPolicy", env, tensorboard_log=folder_path, verbose=1)
 # model = PPO(
 #     CustomActorCriticPolicy,
 #     env,
@@ -72,7 +66,7 @@ eval_callback = EvalCallback(
 )
 
 # %%
-model.learn(2000_000, callback=eval_callback)
+model.learn(1500_000, callback=eval_callback)
 model.save(f"{folder_path}/model")
 
 # %%

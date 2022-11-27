@@ -17,7 +17,7 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         L: int = 4,
         J: float = 1.0,
         r: float = 1.0,
-        D: npt.NDArray = np.array([0, 0, 1], dtype=np.float32),
+        D: npt.NDArray = np.array([0, 0, 1], dtype=np.float32),  # x y z
         step_size: float = 0.1,
         max_episode_steps: int = 16,
     ):
@@ -33,17 +33,21 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         # self.observation_space = spaces.Box(
         #     low=0, high=255, shape=(1, side_len, side_len), dtype=np.uint8
         # ) # cnn
-
+        highs = np.pi * np.ones((2, L, L))
+        highs[0, :, :] *= 2
         self.observation_space = spaces.Box(
-            low=0, high=1, shape=(2 * L * L,), dtype=np.float32
-        )  # mlp
+            low=np.zeros((2, L, L)),
+            high=highs,
+            shape=(2, L, L),
+            dtype=np.float32,
+        )
 
         self.state = self.observation_space.sample()
 
         self.action_space = spaces.Box(
             low=-1,
             high=1,
-            shape=(2 * L * L,),
+            shape=(2, L, L),
             dtype=np.float32,
         )
 
@@ -54,8 +58,9 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         """
         Convert state to lattice [0, 1] -> [0, 2pi]
         """
-        #! both angles are in [0, 2pi], so lattice is not unequivocal
-        lattice = np.reshape(2 * np.pi * self.state, (2, self.L, self.L))
+        # ! both angles are in [0, 2pi], so lattice is not unequivocal
+        # lattice = np.reshape(2 * np.pi * self.state, (2, self.L, self.L))
+        lattice = self.state
         return lattice
 
     def compute_energy(self):
@@ -92,7 +97,13 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         return energy
 
     def step(self, action):
-        self.state = (self.state + self.step_size * action) % 1
+        # self.state = (self.state + self.step_size * action) % (2 * np.pi)
+        self.state = self.state + self.step_size * action
+        idx = self.state[1] > np.pi
+        self.state[1][idx] = np.pi - self.state[1][idx]
+        self.state[0][idx] += np.pi
+        self.state[0] %= 2 * np.pi
+        assert np.all(self.state[1] <= np.pi)
 
         self.step_no += 1
         if self.step_no >= self.max_episode_steps:
