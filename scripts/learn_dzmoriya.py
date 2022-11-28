@@ -13,14 +13,27 @@ from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
 
 # %%
 
-SIDE_LENGTH = 4
+SIDE_LENGTH = 6
+J = 1.0
+D = 1.0
+STEP_SIZE = 0.5
 env = gym.make(
-    "gym_xymodel:dzyaloshinskiimoriya2D-v0", L=SIDE_LENGTH, max_episode_steps=4**2
+    "gym_xymodel:dzyaloshinskiimoriya2D-v0",
+    L=SIDE_LENGTH,
+    J=J,
+    D=D,
+    step_size=STEP_SIZE,
+    max_episode_steps=4**2,
 )
 # env = TimeLimit(env, max_episode_steps=SIDE_LENGTH**2)
 
 eval_env = gym.make(
-    "gym_xymodel:dzyaloshinskiimoriya2D-v0", L=SIDE_LENGTH, max_episode_steps=2 * 4**2
+    "gym_xymodel:dzyaloshinskiimoriya2D-v0",
+    L=SIDE_LENGTH,
+    J=J,
+    D=D,
+    step_size=STEP_SIZE,
+    max_episode_steps=2 * 4**2,
 )
 # eval_env = TimeLimit(eval_env, max_episode_steps=2 * SIDE_LENGTH**2)
 
@@ -44,7 +57,10 @@ policy_kwargs = dict(
 
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 # folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
-folder_path = f"../results/dzmoriya2D/L{SIDE_LENGTH}/{date}_mlp_correct_spherical_nfeatures{n_features}"
+folder_path = (
+    f"../results/dzmoriya2D/L{SIDE_LENGTH}/{date}_J{J}_D{D}_step{STEP_SIZE}"
+    + f"_mlp_nfeat{n_features}"
+)
 
 model = PPO(
     "MlpPolicy",
@@ -72,7 +88,7 @@ eval_callback = EvalCallback(
 )
 
 # %%
-model.learn(2000_000, callback=eval_callback)
+model.learn(500_000, callback=eval_callback)
 model.save(f"{folder_path}/model")
 
 # %%

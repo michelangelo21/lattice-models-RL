@@ -16,16 +16,15 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         self,
         L: int = 4,
         J: float = 1.0,
-        r: float = 1.0,
-        D: npt.NDArray = np.array([0, 0, 1], dtype=np.float32),  # x y z
-        step_size: float = 0.1,
+        D: float = 1.0,
+        step_size: float = 1.0,  # out of pi, 2pi
         max_episode_steps: int = 16,
     ):
         # lattice side_len x side_len
         self.L = L
         self.J = J
-        self.r = r
         self.D = D
+        assert step_size < np.pi
         self.step_size = step_size
         self.max_episode_steps = max_episode_steps
         self.step_no = 0
@@ -34,7 +33,7 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         #     low=0, high=255, shape=(1, side_len, side_len), dtype=np.uint8
         # ) # cnn
         highs = np.pi * np.ones((2, L, L))
-        highs[0, :, :] *= 2
+        highs[1, :, :] *= 2
         self.observation_space = spaces.Box(
             low=np.zeros((2, L, L)),
             high=highs,
@@ -58,38 +57,36 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         """
         Convert state to lattice [0, 1] -> [0, 2pi]
         """
-        # ! both angles are in [0, 2pi], so lattice is not unequivocal
         # lattice = np.reshape(2 * np.pi * self.state, (2, self.L, self.L))
-        lattice = self.state
-        return lattice
+        angles = self.state
+        x = np.sin(angles[0, :, :]) * np.cos(angles[1, :, :])
+        y = np.sin(angles[0, :, :]) * np.sin(angles[1, :, :])
+        z = np.cos(angles[0, :, :])
+        lattice_cartesian = np.stack((x, y, z), axis=2)
+        return lattice_cartesian
 
     def compute_energy(self):
         """
         Computes energy of the current state
         """
         # J=0 except for nearest neighbor
-        angles = self.state_to_lattice()
-
-        x = self.r * np.sin(angles[0, :, :]) * np.cos(angles[1, :, :])
-        y = self.r * np.sin(angles[0, :, :]) * np.sin(angles[1, :, :])
-        z = self.r * np.cos(angles[0, :, :])
-        lattice_cartesian = np.stack((x, y, z), axis=2)
+        lattice_cartesian = self.state_to_lattice()
 
         # ! cross product does not commute, four directions cancel each other out
+        lat_roll_i = np.roll(lattice_cartesian, 1, axis=0)
+        lat_roll_j = np.roll(lattice_cartesian, 1, axis=1)
         energy = (
             -self.J
-            * np.sum(
-                np.dot(
-                    np.cross(lattice_cartesian, np.roll(lattice_cartesian, -1, axis=0)),
-                    self.D,
-                )
-                + np.dot(
-                    np.cross(lattice_cartesian, np.roll(lattice_cartesian, -1, axis=1)),
-                    self.D,
-                )
+            * (
+                (lattice_cartesian * lat_roll_i).sum()
+                + (lattice_cartesian * lat_roll_j).sum()
             )
-            / self.L**2
-        )
+            - self.D
+            * (
+                np.cross(lattice_cartesian, lat_roll_i)[:, :, 1].sum()  # y
+                + np.cross(lattice_cartesian, lat_roll_j)[:, :, 0].sum()  # x
+            )
+        ) / self.L**2
 
         if energy < self.min_energy:
             self.min_energy = energy
@@ -99,11 +96,15 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
     def step(self, action):
         # self.state = (self.state + self.step_size * action) % (2 * np.pi)
         self.state = self.state + self.step_size * action
-        idx = self.state[1] > np.pi
-        self.state[1][idx] = np.pi - self.state[1][idx]
-        self.state[0][idx] += np.pi
-        self.state[0] %= 2 * np.pi
-        assert np.all(self.state[1] <= np.pi)
+        idx_greater = self.state[0] > np.pi
+        idx_less = self.state[0] < 0
+        self.state[0][idx_greater] = 2 * np.pi - self.state[0][idx_greater]
+        self.state[0][idx_less] *= -1
+        self.state[1][idx_greater | idx_less] += np.pi
+        self.state[1] %= 2 * np.pi
+
+        assert np.all(self.state[0] <= np.pi)
+        assert np.all(0 <= self.state)
 
         self.step_no += 1
         if self.step_no >= self.max_episode_steps:
