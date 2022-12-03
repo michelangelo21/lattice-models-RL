@@ -7,6 +7,7 @@ from gym.wrappers import TimeLimit
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.monitor import Monitor
 
 # from src.custom_cnn import CustomCNN
 from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
@@ -17,7 +18,9 @@ SIDE_LENGTH = 4
 env = gym.make("gym_xymodel:xy2d-v0", L=SIDE_LENGTH, max_episode_steps=4**2)
 # env = TimeLimit(env, max_episode_steps=SIDE_LENGTH**2)
 
-eval_env = gym.make("gym_xymodel:xy2d-v0", L=SIDE_LENGTH, max_episode_steps=2 * 4**2)
+eval_env = Monitor(
+    gym.make("gym_xymodel:xy2d-v0", L=SIDE_LENGTH, max_episode_steps=2 * 4**2)
+)
 # eval_env = TimeLimit(eval_env, max_episode_steps=2 * SIDE_LENGTH**2)
 
 

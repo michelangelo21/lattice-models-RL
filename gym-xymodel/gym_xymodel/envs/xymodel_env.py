@@ -15,7 +15,7 @@ class XY2DEnv(gym.Env):
         self,
         L: int = 4,
         J: float = 1.0,
-        step_size: float = 0.1,
+        step_size: float = 0.1 * 2 * np.pi,  # out of 2pi
         max_episode_steps: int = 16,
     ):
         # lattice side_len x side_len
@@ -30,7 +30,7 @@ class XY2DEnv(gym.Env):
         # ) # cnn
 
         self.observation_space = spaces.Box(
-            low=0, high=1, shape=(L**2,), dtype=np.float32
+            low=0, high=2 * np.pi, shape=(1, L, L), dtype=np.float32
         )  # mlp
 
         self.state = self.observation_space.sample()
@@ -38,7 +38,7 @@ class XY2DEnv(gym.Env):
         self.action_space = spaces.Box(
             low=-1,
             high=1,
-            shape=(L**2,),
+            shape=(1, L, L),
             dtype=np.float32,
         )
 
@@ -49,7 +49,7 @@ class XY2DEnv(gym.Env):
         """
         Convert state to lattice [0, 1] -> [0, pi]
         """
-        lattice = np.reshape(2 * np.pi * self.state, (self.L, self.L))
+        lattice = self.state
         return lattice
 
     def compute_energy(self):
@@ -61,8 +61,8 @@ class XY2DEnv(gym.Env):
         energy = (
             -self.J
             * np.sum(
-                np.cos(lattice - np.roll(lattice, -1, axis=0))
-                + np.cos(lattice - np.roll(lattice, -1, axis=1))
+                np.cos(lattice - np.roll(lattice, 1, axis=-1))
+                + np.cos(lattice - np.roll(lattice, 1, axis=-2))
             )
             / self.L**2
         )
@@ -73,7 +73,7 @@ class XY2DEnv(gym.Env):
         return energy
 
     def step(self, action):
-        self.state = (self.state + self.step_size * action) % 1
+        self.state = (self.state + self.step_size * action) % (2 * np.pi)
 
         self.step_no += 1
         if self.step_no >= self.max_episode_steps:
