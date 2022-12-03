@@ -62,7 +62,7 @@ class CustomNetwork(nn.Module):
     def __init__(
         self,
         feature_dim: int,
-        net_arch: Dict[str, List[int]],
+        net_arch: Dict[str, int],
         device: Union[torch.device, str] = "auto",
         # last_layer_dim_pi: int = 64,
         # last_layer_dim_vf: int = 64,
