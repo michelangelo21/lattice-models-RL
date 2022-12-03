@@ -17,6 +17,8 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         L: int = 4,
         J: float = 1.0,
         D: float = 1.0,
+        B: float = 0.0,
+        isPBC: bool = True,
         step_size: float = 1.0,  # out of pi, 2pi
         max_episode_steps: int = 16,
     ):
@@ -24,6 +26,8 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         self.L = L
         self.J = J
         self.D = D
+        self.B = B
+        self.isPBC = isPBC  # periodic boundary conditions
         assert step_size < np.pi
         self.step_size = step_size
         self.max_episode_steps = max_episode_steps
@@ -73,8 +77,15 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
         lattice_cartesian = self.state_to_lattice()
 
         # ! cross product does not commute, four directions cancel each other out
-        lat_roll_i = np.roll(lattice_cartesian, 1, axis=0)
-        lat_roll_j = np.roll(lattice_cartesian, 1, axis=1)
+        if self.isPBC:
+            lat_roll_i = np.roll(lattice_cartesian, 1, axis=0)
+            lat_roll_j = np.roll(lattice_cartesian, 1, axis=1)
+        else:
+            lat_roll_i = np.roll(lattice_cartesian, 1, axis=0)
+            lat_roll_i[0, :, :] = 0
+            lat_roll_j = np.roll(lattice_cartesian, 1, axis=1)
+            lat_roll_j[:, 0, :] = 0
+
         energy = (
             -self.J
             * (
@@ -87,6 +98,8 @@ class DzyaloshinskiiMoriya2DEnv(gym.Env):
                 + np.cross(lattice_cartesian, lat_roll_j)[:, :, 0].sum()  # x
             )
         ) / self.L**2
+        if self.B:
+            energy += -self.B * lattice_cartesian[:, :, 2].sum() / self.L**2  # z
 
         if energy < self.min_energy:
             self.min_energy = energy

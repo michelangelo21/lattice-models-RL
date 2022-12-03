@@ -13,15 +13,18 @@ from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
 
 # %%
 
-SIDE_LENGTH = 6
+SIDE_LENGTH = 4
 J = 1.0
-D = 1.0
+D = 1.4
+B = 0.02
 STEP_SIZE = 0.5
 env = gym.make(
     "gym_xymodel:dzyaloshinskiimoriya2D-v0",
     L=SIDE_LENGTH,
     J=J,
     D=D,
+    B=B,
+    isPBC=False,
     step_size=STEP_SIZE,
     max_episode_steps=4**2,
 )
@@ -32,6 +35,8 @@ eval_env = gym.make(
     L=SIDE_LENGTH,
     J=J,
     D=D,
+    B=B,
+    isPBC=False,
     step_size=STEP_SIZE,
     max_episode_steps=2 * 4**2,
 )
@@ -46,7 +51,7 @@ check_env(env)
 #     features_extractor_class=ReshapeExtractor,
 #     net_arch={"n_filters": 64, "n_blocks": 2, "L": SIDE_LENGTH},
 # )
-n_features = 128
+n_features = 256
 policy_kwargs = dict(
     net_arch=[
         n_features,
@@ -58,7 +63,7 @@ policy_kwargs = dict(
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 # folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
 folder_path = (
-    f"../results/dzmoriya2D/L{SIDE_LENGTH}/{date}_J{J}_D{D}_step{STEP_SIZE}"
+    f"../results/dzmoriya2D/L{SIDE_LENGTH}/{date}_J{J}_D{D}_B{B}_step{STEP_SIZE}"
     + f"_mlp_nfeat{n_features}"
 )
 
