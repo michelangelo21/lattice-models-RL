@@ -26,17 +26,17 @@ env_id = "gym_xymodel:xy2d-v0"
 
 def create_env(**env_kwargs):
     env = gym.make(env_id, **env_kwargs)
-    env = ContinuousLearningWrapper(env)
+    # env = ContinuousLearningWrapper(env)
     return env
 
 
-N_ENVS = 8
+N_ENVS = 4
 env = make_vec_env(
     create_env,
-    env_kwargs=dict(L=SIDE_LENGTH, max_episode_steps=4**2 + 10),
+    env_kwargs=dict(L=SIDE_LENGTH, max_episode_steps=4**2),
     n_envs=N_ENVS,
-    wrapper_class=TimeLimit,
-    wrapper_kwargs=dict(max_episode_steps=4**2),
+    # wrapper_class=TimeLimit,
+    # wrapper_kwargs=dict(max_episode_steps=4**2),
 )
 env = VecMonitor(env)
 
@@ -55,9 +55,12 @@ policy_kwargs = dict(
 
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 # folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
-folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_continuous"
+# folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_continuous_nenvs{N_ENVS}"
+folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}"
 
-model = PPO("MlpPolicy", env, tensorboard_log=folder_path, verbose=1)
+model = PPO(
+    "MlpPolicy", env, n_steps=2048 // N_ENVS, tensorboard_log=folder_path, verbose=1
+)
 # model = PPO(
 #     CustomActorCriticPolicy,
 #     env,
@@ -79,5 +82,3 @@ eval_callback = EvalCallback(
 # %%
 model.learn(200_000, callback=eval_callback)
 model.save(f"{folder_path}/model")
-
-# %%
