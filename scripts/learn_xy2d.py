@@ -32,61 +32,59 @@ def create_env(**env_kwargs):
 
 N_ENVS = 8
 
-for _ in range(10):
+env = make_vec_env(
+    create_env,
+    env_kwargs=dict(L=SIDE_LENGTH, max_episode_steps=4**2),
+    n_envs=N_ENVS,
+    # wrapper_class=TimeLimit,
+    # wrapper_kwargs=dict(max_episode_steps=4**2),
+)
+env = VecMonitor(env)
 
-    env = make_vec_env(
-        create_env,
-        env_kwargs=dict(L=SIDE_LENGTH, max_episode_steps=4**2),
-        n_envs=N_ENVS,
-        # wrapper_class=TimeLimit,
-        # wrapper_kwargs=dict(max_episode_steps=4**2),
-    )
-    env = VecMonitor(env)
+eval_env = Monitor(gym.make(env_id, L=SIDE_LENGTH, max_episode_steps=2 * 4**2))
+# eval_env = Monitor(TimeLimit(eval_env, max_episode_steps=2 * 4**2))
 
-    eval_env = Monitor(gym.make(env_id, L=SIDE_LENGTH, max_episode_steps=2 * 4**2))
-    # eval_env = Monitor(TimeLimit(eval_env, max_episode_steps=2 * 4**2))
+# check_env(env)
 
-    # check_env(env)
+# %%
+policy_kwargs = dict(
+    features_extractor_class=ReshapeExtractor,
+    net_arch={"n_filters": 64, "n_blocks": 2, "L": SIDE_LENGTH},
+)
 
-    # %%
-    policy_kwargs = dict(
-        features_extractor_class=ReshapeExtractor,
-        net_arch={"n_filters": 64, "n_blocks": 2, "L": SIDE_LENGTH},
-    )
+date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
+# folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
+# folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_continuous_nenvs{N_ENVS}"
+# folder_path = (
+#     f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}_nsteps{N_STEPS}"
+# )
+folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}"
 
-    date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
-    # folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
-    # folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_continuous_nenvs{N_ENVS}"
-    # folder_path = (
-    #     f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}_nsteps{N_STEPS}"
-    # )
-    folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}"
+model = PPO(
+    "MlpPolicy",
+    env,
+    n_steps=2048 // N_ENVS,
+    tensorboard_log=folder_path,
+    verbose=1,
+)
+# model = PPO(
+#     CustomActorCriticPolicy,
+#     env,
+#     policy_kwargs=policy_kwargs,
+#     tensorboard_log=folder_path,
+#     verbose=1,
+# )
 
-    model = PPO(
-        "MlpPolicy",
-        env,
-        n_steps=2048 // N_ENVS,
-        tensorboard_log=folder_path,
-        verbose=1,
-    )
-    # model = PPO(
-    #     CustomActorCriticPolicy,
-    #     env,
-    #     policy_kwargs=policy_kwargs,
-    #     tensorboard_log=folder_path,
-    #     verbose=1,
-    # )
+eval_callback = EvalCallback(
+    eval_env,
+    best_model_save_path=folder_path + "/logs/",
+    log_path=folder_path + "/logs/",
+    n_eval_episodes=20,
+    eval_freq=max(10_000 // N_ENVS, 1),
+    deterministic=True,
+    render=False,
+)
 
-    eval_callback = EvalCallback(
-        eval_env,
-        best_model_save_path=folder_path + "/logs/",
-        log_path=folder_path + "/logs/",
-        n_eval_episodes=20,
-        eval_freq=max(10_000 // N_ENVS, 1),
-        deterministic=True,
-        render=False,
-    )
-
-    # %%
-    model.learn(200_000, callback=eval_callback)
-    model.save(f"{folder_path}/model")
+# %%
+model.learn(200_000, callback=eval_callback)
+model.save(f"{folder_path}/model")
