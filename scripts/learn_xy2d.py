@@ -60,7 +60,7 @@ for _ in range(10):
     # folder_path = (
     #     f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}_nsteps{N_STEPS}"
     # )
-    folder_path = f"../results/xy2D/L{SIDE_LENGTH}/plots/{date}_mlp_nenvs{N_ENVS}"
+    folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}"
 
     model = PPO(
         "MlpPolicy",
