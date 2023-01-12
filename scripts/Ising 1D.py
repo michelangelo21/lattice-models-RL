@@ -14,7 +14,7 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 # %%
 side_length = 8
-env = gym.make("gym_xymodel:isingmodel1d-v0", L=side_length)
+env = gym.make("gym_latticemodels:isingmodel1d-v0", L=side_length)
 env = TimeLimit(env, max_episode_steps=100)
 from stable_baselines3.common.env_checker import check_env
 

@@ -15,12 +15,16 @@ from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
 
 SIDE_LENGTH = 4
 env = gym.make(
-    "gym_xymodel:dzyaloshinskiimoriya2D-v0", L=SIDE_LENGTH, max_episode_steps=4**2
+    "gym_latticemodels:dzyaloshinskiimoriya2D-v0",
+    L=SIDE_LENGTH,
+    max_episode_steps=4**2,
 )
 # env = TimeLimit(env, max_episode_steps=SIDE_LENGTH**2)
 
 eval_env = gym.make(
-    "gym_xymodel:dzyaloshinskiimoriya2D-v0", L=SIDE_LENGTH, max_episode_steps=2 * 4**2
+    "gym_latticemodels:dzyaloshinskiimoriya2D-v0",
+    L=SIDE_LENGTH,
+    max_episode_steps=2 * 4**2,
 )
 # eval_env = TimeLimit(eval_env, max_episode_steps=2 * SIDE_LENGTH**2)
 

@@ -14,7 +14,7 @@ from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
 # %%
 
 SIDE_LENGTH_0 = 4
-env0 = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH_0, J=1.0)
+env0 = gym.make("gym_latticemodels:ising2d-v0", L=SIDE_LENGTH_0, J=1.0)
 env0 = TimeLimit(env0, max_episode_steps=SIDE_LENGTH_0**2)
 model0 = PPO.load(
     "../results/ising2D/L4/2022-11-24T145201_1_2CNNcirc_filters64/model.zip", env=env0
@@ -22,10 +22,10 @@ model0 = PPO.load(
 
 
 SIDE_LENGTH = 4
-env = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH, J=1.0)
+env = gym.make("gym_latticemodels:ising2d-v0", L=SIDE_LENGTH, J=1.0)
 env = TimeLimit(env, max_episode_steps=SIDE_LENGTH**2)
 
-eval_env = gym.make("gym_xymodel:ising2d-v0", L=SIDE_LENGTH, J=1.0)
+eval_env = gym.make("gym_latticemodels:ising2d-v0", L=SIDE_LENGTH, J=1.0)
 eval_env = TimeLimit(eval_env, max_episode_steps=2 * SIDE_LENGTH**2)
 
 

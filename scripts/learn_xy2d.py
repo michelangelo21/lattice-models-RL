@@ -18,7 +18,7 @@ from src.wrappers import ContinuousLearningWrapper
 # %%
 
 SIDE_LENGTH = 6
-env_id = "gym_xymodel:xy2d-v0"
+env_id = "gym_latticemodels:xy2d-v0"
 # env = gym.make(env_id, L=SIDE_LENGTH, max_episode_steps=4**2 + 10)
 # env = ContinuousLearningWrapper(env)
 # env = TimeLimit(env, max_episode_steps=4**2)

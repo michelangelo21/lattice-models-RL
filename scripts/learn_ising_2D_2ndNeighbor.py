@@ -15,7 +15,7 @@ from src.custom_cnn import CustomCNN
 
 # %%
 SIDE_LENGTH = 4
-env_id = "gym_xymodel:ising2d_2ndneighbor-v0"
+env_id = "gym_latticemodels:ising2d_2ndneighbor-v0"
 
 
 def create_env(**env_kwargs):

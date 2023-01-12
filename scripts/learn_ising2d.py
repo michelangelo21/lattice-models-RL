@@ -18,7 +18,7 @@ from src.wrappers import ContinuousLearningWrapper
 # %%
 
 SIDE_LENGTH = 6
-env_id = "gym_xymodel:ising2d-v0"
+env_id = "gym_latticemodels:ising2d-v0"
 
 
 def create_env(**env_kwargs):

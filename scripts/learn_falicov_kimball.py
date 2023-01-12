@@ -22,7 +22,7 @@ from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
 from src.cos_annealing import cosine_schedule
 
 # %%
-env_id = "gym_xymodel:falicovkimball2D-v0"
+env_id = "gym_latticemodels:falicovkimball2D-v0"
 N_ENVS = 8
 
 SIDE_LENGTH = 4
