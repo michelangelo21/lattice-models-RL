@@ -13,29 +13,29 @@ from stable_baselines3.common.vec_env import VecMonitor
 
 from stable_baselines3.common.env_checker import check_env
 
+from sb3_contrib import MaskablePPO
+from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
+
+
 # from src.custom_cnn import CustomCNN
 from src.custom_policy import CustomActorCriticPolicy, ReshapeExtractor
 from src.cos_annealing import cosine_schedule
 
 # %%
-env_id = "gym_xymodel:dzyaloshinskiimoriya2D-v0"
+env_id = "gym_xymodel:falicovkimball2D-v0"
 N_ENVS = 8
 
-SIDE_LENGTH = 6
-J = 1.0
-D = 1.4
-B = 0.02
-IS_PBC = True
-STEP_SIZE = 0.5
+SIDE_LENGTH = 4
+Ne = 8
+U = 2.0
+max_steps = 16
+
 
 env_kwargs = dict(
     L=SIDE_LENGTH,
-    J=J,
-    D=D,
-    B=B,
-    isPBC=IS_PBC,
-    step_size=STEP_SIZE,
-    max_episode_steps=4**2,
+    Ne=Ne,
+    U=U,
+    max_steps=max_steps + 1,
 )
 
 
@@ -49,14 +49,14 @@ env = make_vec_env(
     create_env,
     env_kwargs=env_kwargs,
     n_envs=N_ENVS,
-    # wrapper_class=TimeLimit,
-    # wrapper_kwargs=dict(max_episode_steps=4**2),
+    wrapper_class=TimeLimit,
+    wrapper_kwargs=dict(max_episode_steps=max_steps),
 )
 env = VecMonitor(env)
 
 
 eval_env = Monitor(gym.make(env_id, **env_kwargs))
-# eval_env = TimeLimit(eval_env, max_episode_steps=2 * SIDE_LENGTH**2)
+eval_env = TimeLimit(eval_env, max_episode_steps=2 * max_steps)
 
 
 # check_env(env)
@@ -82,18 +82,19 @@ policy_kwargs = dict(
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 # folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
 folder_path = (
-    f"../results/dzmoriya2D/L{SIDE_LENGTH}/{date}_J{J}_D{D}_B{B}_step{STEP_SIZE}"
-    + f"_mlp_nfeat{N_FEATURES}_cosdecay"
+    f"../results/falicovkimball2D/L{SIDE_LENGTH}/{date}_Ne{Ne}_U{U}"
+    + f"_mlp_nfeat{N_FEATURES}_cosdecay_maskable"
 )
 
-model = PPO(
-    "MlpPolicy",
-    env,
-    learning_rate=cosine_schedule(1e-6, 1e-3, 5),
-    tensorboard_log=folder_path,
-    verbose=0,
-    policy_kwargs=policy_kwargs,
-)
+# model = PPO(
+#     "MlpPolicy",
+#     env,
+#     learning_rate=cosine_schedule(1e-6, 1e-3, 5),
+#     tensorboard_log=folder_path,
+#     verbose=0,
+#     policy_kwargs=policy_kwargs,
+# )
+
 # model = PPO(
 #     CustomActorCriticPolicy,
 #     env,
@@ -102,7 +103,17 @@ model = PPO(
 #     verbose=1,
 # )
 
-eval_callback = EvalCallback(
+model = MaskablePPO(
+    "MlpPolicy",
+    env,
+    learning_rate=cosine_schedule(1e-6, 1e-3, 5),
+    tensorboard_log=folder_path,
+    verbose=1,
+    policy_kwargs=policy_kwargs,
+)
+
+
+eval_callback = MaskableEvalCallback(
     eval_env,
     best_model_save_path=folder_path + "/logs/",
     log_path=folder_path + "/logs/",
@@ -113,7 +124,7 @@ eval_callback = EvalCallback(
 )
 
 # %%
-model.learn(2000_000, callback=eval_callback)
+model.learn(1000_000, callback=eval_callback)
 model.save(f"{folder_path}/model")
 
 # %%

@@ -17,7 +17,7 @@ from src.wrappers import ContinuousLearningWrapper
 
 # %%
 
-SIDE_LENGTH = 4
+SIDE_LENGTH = 6
 env_id = "gym_xymodel:xy2d-v0"
 # env = gym.make(env_id, L=SIDE_LENGTH, max_episode_steps=4**2 + 10)
 # env = ContinuousLearningWrapper(env)
@@ -26,7 +26,7 @@ env_id = "gym_xymodel:xy2d-v0"
 
 def create_env(**env_kwargs):
     env = gym.make(env_id, **env_kwargs)
-    # env = ContinuousLearningWrapper(env)
+    env = ContinuousLearningWrapper(env)
     return env
 
 
@@ -41,16 +41,13 @@ env = make_vec_env(
 )
 env = VecMonitor(env)
 
-eval_env = Monitor(gym.make(env_id, L=SIDE_LENGTH, max_episode_steps=2 * 4**2))
+eval_env = Monitor(gym.make(env_id, L=SIDE_LENGTH, max_episode_steps=4**2))
 # eval_env = Monitor(TimeLimit(eval_env, max_episode_steps=2 * 4**2))
 
 # check_env(env)
 
 # %%
-policy_kwargs = dict(
-    features_extractor_class=ReshapeExtractor,
-    net_arch={"n_filters": 64, "n_blocks": 2, "L": SIDE_LENGTH},
-)
+
 
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 # folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_2CNNcirc_filters64"
@@ -58,8 +55,20 @@ date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 # folder_path = (
 #     f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}_nsteps{N_STEPS}"
 # )
-folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}"
 
+N_FEATURES = 256
+folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_mlp_nenvs{N_ENVS}_nfeatures{N_FEATURES}_nblocks3"
+# folder_path = f"../results/xy2D/L{SIDE_LENGTH}/{date}_cnn_nenvs{N_ENVS}_nfeatures{N_FEATURES}_nblocks2"
+
+
+policy_kwargs = dict(
+    net_arch=[
+        dict(
+            pi=[N_FEATURES, N_FEATURES, N_FEATURES],
+            vf=[N_FEATURES, N_FEATURES, N_FEATURES],
+        )
+    ]
+)
 model = PPO(
     "MlpPolicy",
     env,
@@ -67,6 +76,11 @@ model = PPO(
     tensorboard_log=folder_path,
     verbose=1,
 )
+
+# policy_kwargs = dict(
+#     features_extractor_class=ReshapeExtractor,
+#     net_arch={"n_filters": N_FEATURES, "n_blocks": 2, "L": SIDE_LENGTH},
+# )
 # model = PPO(
 #     CustomActorCriticPolicy,
 #     env,
@@ -80,11 +94,11 @@ eval_callback = EvalCallback(
     best_model_save_path=folder_path + "/logs/",
     log_path=folder_path + "/logs/",
     n_eval_episodes=20,
-    eval_freq=max(10_000 // N_ENVS, 1),
+    eval_freq=max(5_000 // N_ENVS, 1),
     deterministic=True,
     render=False,
 )
 
 # %%
-model.learn(200_000, callback=eval_callback)
+model.learn(2000_000, callback=eval_callback)
 model.save(f"{folder_path}/model")
