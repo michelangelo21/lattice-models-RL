@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/460968633.svg)](https://zenodo.org/badge/latestdoi/460968633)
+
+
 # Machine Learning-driven improvement of the ground state configuration
 
 This repository implements physical lattice models as `gym` environments to find their ground states with reinforcement learning.
