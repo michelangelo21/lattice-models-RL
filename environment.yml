@@ -1,4 +1,4 @@
-name: spinlatrl
+name: latticerl
 channels:
   - defaults
 dependencies:
