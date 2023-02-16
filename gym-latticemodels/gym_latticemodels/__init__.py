@@ -20,6 +20,11 @@ register(
 )
 
 register(
+    id="isingglass-v0",
+    entry_point="gym_latticemodels.envs:IsingGlassEnv",
+)
+
+register(
     id="isingmodel1dendrew-v0",
     entry_point="gym_latticemodels.envs:IsingModel1DEndRewEnv",
 )
