@@ -18,13 +18,14 @@ from src.wrappers import ContinuousLearningWrapper
 # %%
 
 SIDE_LENGTH = 4
+MAX_EPISODE_STEPS = 2 * SIDE_LENGTH**2
 env_id = "gym_latticemodels:isingglass-v0"
 
 
 def create_env(**env_kwargs):
     env = gym.make(env_id, **env_kwargs)
     # env = ContinuousLearningWrapper(env)
-    env = TimeLimit(env, max_episode_steps=SIDE_LENGTH**2)
+    env = TimeLimit(env, max_episode_steps=MAX_EPISODE_STEPS)
     return env
 
 
@@ -40,7 +41,7 @@ env = make_vec_env(
 env = VecMonitor(env)
 
 eval_env = gym.make(env_id, L=SIDE_LENGTH)
-eval_env = Monitor(TimeLimit(eval_env, max_episode_steps=2 * SIDE_LENGTH**2))
+eval_env = Monitor(TimeLimit(eval_env, max_episode_steps=MAX_EPISODE_STEPS))
 
 # check_env(env)
 N_FEATURES = 128
@@ -70,7 +71,9 @@ policy_kwargs = dict(
 
 date = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 
-folder_path = f"../results/isingglass/L{SIDE_LENGTH}/{date}_mlp"
+folder_path = (
+    f"../results/isingglass/L{SIDE_LENGTH}/{date}_mlp_steps_{MAX_EPISODE_STEPS}"
+)
 # folder_path = f"../results/ising2D/L{SIDE_LENGTH}/{date}_cstmpol_nfilters{N_FILTERS}_nblocks{N_BLOCKS}"
 
 model = PPO(
