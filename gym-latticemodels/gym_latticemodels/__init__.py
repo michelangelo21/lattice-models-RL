@@ -38,3 +38,8 @@ register(
     id="dzyaloshinskiimoriya2D-v0",
     entry_point="gym_latticemodels.envs:DzyaloshinskiiMoriya2DEnv",
 )
+
+register(
+    id="ladder2d-v0",
+    entry_point="gym_latticemodels.envs:Ladder2DEnv",
+)
